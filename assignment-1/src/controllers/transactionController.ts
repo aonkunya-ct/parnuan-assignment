@@ -32,12 +32,46 @@ export const createTransaction = async (req: Request, res: Response): Promise<vo
 // ===== READ ALL: ดึง Transaction ทั้งหมด (ที่ยังไม่ถูกลบ) =====
 export const getAllTransactions = async (req: Request, res: Response): Promise<void> => {
   try {
-    // หาเฉพาะที่ deletedAt เป็น null (ยังไม่ถูกลบ)
-    const transactions = await Transaction.find({ deletedAt: null }).sort({ date: -1 });
+    // Query Parameters
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const type = req.query.type as string;
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+
+    // สร้าง Filter
+    const filter: any = { deletedAt: null };
+
+    // Filter ตาม type
+    if (type && ["income", "expense"].includes(type)) {
+      filter.type = type;
+    }
+
+    // Filter ตาม date range
+    if (startDate || endDate) {
+      filter.date = {};
+      if (startDate) filter.date.$gte = new Date(startDate);
+      if (endDate) filter.date.$lte = new Date(endDate);
+    }
+
+    // คำนวณ skip
+    const skip = (page - 1) * limit;
+
+    // Query
+    const transactions = await Transaction.find(filter)
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    // นับจำนวนทั้งหมด
+    const total = await Transaction.countDocuments(filter);
 
     res.status(200).json({
       success: true,
       count: transactions.length,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
       data: transactions,
     });
   } catch (error) {
