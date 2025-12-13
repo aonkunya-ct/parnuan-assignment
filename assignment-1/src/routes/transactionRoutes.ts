@@ -7,15 +7,50 @@ import {
   deleteTransaction,
   restoreTransaction,
 } from "../controllers/transactionController";
+import {
+  createTransactionValidator,
+  updateTransactionValidator,
+  idParamValidator,
+} from "../validators/transactionValidator";
+import { handleValidationErrors } from "../middlewares/errorHandler";
 
 const router = Router();
 
-// CRUD Routes
-router.post("/", createTransaction);           // POST   /api/transactions
-router.get("/", getAllTransactions);           // GET    /api/transactions
-router.get("/:id", getTransactionById);        // GET    /api/transactions/:id
-router.put("/:id", updateTransaction);         // PUT    /api/transactions/:id
-router.delete("/:id", deleteTransaction);      // DELETE /api/transactions/:id
-router.patch("/:id/restore", restoreTransaction); // PATCH  /api/transactions/:id/restore
+router.post(
+  "/",
+  createTransactionValidator,
+  handleValidationErrors,
+  createTransaction
+);
+
+router.get("/", getAllTransactions);
+
+router.get(
+  "/:id",
+  idParamValidator,
+  handleValidationErrors,
+  getTransactionById
+);
+
+router.put(
+  "/:id",
+  updateTransactionValidator,
+  handleValidationErrors,
+  updateTransaction
+);
+
+router.delete(
+  "/:id",
+  idParamValidator,
+  handleValidationErrors,
+  deleteTransaction
+);
+
+router.patch(
+  "/:id/restore",
+  idParamValidator,
+  handleValidationErrors,
+  restoreTransaction
+);
 
 export default router;

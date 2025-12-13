@@ -2,35 +2,34 @@ import express, { Application, Request, Response } from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/database";
 import transactionRoutes from "./routes/transactionRoutes";
+import { errorHandler, notFoundHandler } from "./middlewares/errorHandler";
 
-// โหลดค่าจากไฟล์ .env
 dotenv.config();
 
-// สร้าง Express App
 const app: Application = express();
 
-// Middleware
 app.use(express.json());
 
-// Route ทดสอบ
 app.get("/", (req: Request, res: Response) => {
   res.json({
     message: "Welcome to Transaction API! 🎉",
     status: "Server is running",
+    endpoints: {
+      transactions: "/api/transactions",
+    },
   });
 });
 
-// ===== เพิ่มบรรทัดนี้ =====
 app.use("/api/transactions", transactionRoutes);
 
-// กำหนด Port
+app.use(notFoundHandler);
+app.use(errorHandler);
+
 const PORT = process.env.PORT || 3000;
 
-// เริ่มต้น Server
 const startServer = async (): Promise<void> => {
   try {
     await connectDB();
-
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
     });
